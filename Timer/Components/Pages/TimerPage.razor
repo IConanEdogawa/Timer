@@ -1,5 +1,78 @@
-﻿<h3>TimerPage</h3>
+﻿@page "/timer"
+
+<div class="timer-container">
+    <svg class="progress-circle" width="200" height="200" viewBox="0 0 200 200">
+        <circle class="progress-bg" cx="100" cy="100" r="90"></circle>
+        <circle class="progress-bar" cx="100" cy="100" r="90"
+                style="stroke-dasharray:@(Circumference); stroke-dashoffset:@(Circumference - (Circumference * ProgressValue / 100))"></circle>
+        <text x="100" y="110" text-anchor="middle" class="progress-text">@ElapsedTime</text>
+    </svg>
+</div>
 
 @code {
+    private const double Circumference = 2 * Math.PI * 90; 
 
+    private System.Timers.Timer timer;
+    private DateTime startTime;
+    private string ElapsedTime => (DateTime.Now - startTime).ToString(@"mm\:ss");
+
+    [Parameter]
+    public int ProgressValue { get; set; } = 0;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        startTime = DateTime.Now;
+        timer = new System.Timers.Timer(1000); 
+        timer.Elapsed += TimerElapsed;
+        timer.Start();
+    }
+
+    private void TimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+    {
+        ProgressValue++;
+        if (ProgressValue >= 100)
+        {
+            timer.Stop();
+        }
+        InvokeAsync(() => StateHasChanged());
+    }
+
+    public void Dispose()
+    {
+        timer.Dispose();
+    }
 }
+
+<style>
+    .timer-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh; 
+    }
+
+    .progress-circle {
+        transform: rotate(-90deg);
+    }
+
+    .progress-bg {
+        fill: none;
+        stroke: #e0e0e0;
+        stroke-width: 18;
+    }
+
+    .progress-bar {
+        fill: none;
+        stroke: #76c7c0;
+        stroke-width: 18;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.5s;
+    }
+
+    .progress-text {
+        font-size: 2em;
+        fill: #333;
+        font-weight: bold;
+    }
+</style>

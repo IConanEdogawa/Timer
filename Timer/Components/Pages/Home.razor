@@ -1,26 +1,16 @@
-﻿@page "/"
+﻿@inject NavigationManager Navigation
+
+@page "/"
 
 <PageTitle>Home</PageTitle>
 
 
-<MatTabGroup>
-    <MatTab Label="Timer">
-        First Content
-    </MatTab>
-    <MatTab Label="Last timers">
-        Second Content
-    </MatTab>
-
-</MatTabGroup>
+<button @onclick="onClickMethod"> Click me !</button>
 
 
 @code{
-
-};
-
-<style>
-    body{
-        background-color: #121212;
+    void onClickMethod()
+    {
+        Navigation.NavigateTo("/timer");
     }
-
-</style>
+}
