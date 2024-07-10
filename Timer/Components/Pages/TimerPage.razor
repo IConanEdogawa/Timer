@@ -4,56 +4,100 @@
     <svg class="progress-circle" width="200" height="200" viewBox="0 0 200 200">
         <circle class="progress-bg" cx="100" cy="100" r="90"></circle>
         <circle class="progress-bar" cx="100" cy="100" r="90"
-                style="stroke-dasharray:@(Circumference); stroke-dashoffset:@(Circumference - (Circumference * ProgressValue / 100))"></circle>
+                style="stroke-dasharray:@(Circumference); stroke-dashoffset:@(Circumference - (Circumference * progressValue / 100))"></circle>
         <text x="100" y="110" text-anchor="middle" class="progress-text">@ElapsedTime</text>
     </svg>
+    <div class="controls-container">
+        <div>
+            <label style="color:white;" for="timerInput">Set Timer (seconds):</label>
+            <input id="timerInput" type="number" class="form-control" @bind="TimerDuration" />
+        </div>
+        <div>
+            <button class="btn btn-primary mr-2" @onclick="ToggleTimer">
+                @if (timerEnabled)
+                {
+                    <i class="bi bi-pause-fill">Pause</i>
+                }
+                else
+                {
+                    <i class="bi bi-play-fill">Play</i>
+                    
+                }
+            </button>
+            <button class="btn btn-secondary" @onclick="ResetTimer">Reset</button>
+        </div>
+    </div>
 </div>
 
 @code {
     private const double Circumference = 2 * Math.PI * 90; 
 
+
     private System.Timers.Timer timer;
     private DateTime startTime;
-    private string ElapsedTime => (DateTime.Now - startTime).ToString(@"mm\:ss");
-
-    [Parameter]
-    public int ProgressValue { get; set; } = 0;
+    private bool timerEnabled = false;
+    private int progressValue;
+    private int TimerDuration { get; set; } = 60; 
+    private string ElapsedTime => TimeSpan.FromSeconds(progressValue).ToString(@"mm\:ss");
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        startTime = DateTime.Now;
-        timer = new System.Timers.Timer(1000); 
-        timer.Elapsed += TimerElapsed;
-        timer.Start();
+        progressValue = TimerDuration;
+    }
+
+    private void ToggleTimer()
+    {
+        timerEnabled = !timerEnabled;
+
+        if (timerEnabled)
+        {
+            startTime = DateTime.Now;
+            timer = new System.Timers.Timer(1000);
+            timer.Elapsed += TimerElapsed;
+            timer.Start();
+        }
+        else
+        {
+            timer.Stop();
+        }
     }
 
     private void TimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
     {
-        ProgressValue++;
-        if (ProgressValue >= 100)
+        if (progressValue > 0)
+        {
+            progressValue--;
+            InvokeAsync(() => StateHasChanged());
+        }
+        else
         {
             timer.Stop();
+            timerEnabled = false;
         }
-        InvokeAsync(() => StateHasChanged());
     }
 
-    public void Dispose()
+    private void ResetTimer()
     {
-        timer.Dispose();
+        progressValue = TimerDuration;
+        timerEnabled = false;
+        timer?.Stop();
+        InvokeAsync(() => StateHasChanged());
     }
 }
 
 <style>
     .timer-container {
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        height: 100vh; 
+        height: 100vh;
     }
 
     .progress-circle {
-        transform: rotate(-90deg);
+        margin-bottom: 20px;
+        /* transform: rotate(-90deg); */
     }
 
     .progress-bg {
@@ -72,7 +116,17 @@
 
     .progress-text {
         font-size: 2em;
-        fill: #333;
+        fill: white;
         font-weight: bold;
+    }
+
+    .controls-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn {
+        font-size: 1em;
     }
 </style>
